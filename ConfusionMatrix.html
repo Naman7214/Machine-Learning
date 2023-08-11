@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Confusion Matrix Analyzer</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1f1f1f;
+      color: white;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+      background-color: #333;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.3);
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+
+    input {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 10px;
+      border: 1px solid #555;
+      border-radius: 4px;
+      background-color: #444;
+      color: white;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      float: right;
+      transition: background-color 0.3s;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .result {
+      margin-top: 20px;
+      padding: 10px;
+      background-color: #555;
+      border-radius: 4px;
+      text-align: center;
+    }
+
+    canvas {
+      border: 2px solid black;
+    }
+
+    #confusion-matrix-container {
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Confusion Matrix Analyzer</h1>
+    <label for="true-positive">True Positive:</label>
+    <input type="number" id="true-positive" min="0">
+    <label for="false-positive">False Positive:</label>
+    <input type="number" id="false-positive" min="0">
+    <label for="true-negative">True Negative:</label>
+    <input type="number" id="true-negative" min="0">
+    <label for="false-negative">False Negative:</label>
+    <input type="number" id="false-negative" min="0">
+    <button id="calculate-btn">Calculate</button>
+  </div>
+
+  <div class="container">
+    <div id="result" class="result"></div>
+  </div>
+
+  <div id="confusion-matrix-container" class="container">
+    <canvas id="confusion-matrix"></canvas>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script>
+    const canvas = document.getElementById("confusion-matrix");
+    const ctx = canvas.getContext("2d");
+
+    const cellSize = 50;
+    const margin = 20;
+
+    function drawConfusionMatrix(truePositive, falsePositive, trueNegative, falseNegative) {
+      const matrixData = {
+        labels: ["Predicted Positive", "Predicted Negative"],
+        datasets: [
+        {
+          label: "Actual Negative",
+          data: [falsePositive, trueNegative],
+          backgroundColor: "black",
+        },
+        {
+          label: "Actual Positive",
+          data: [truePositive, falseNegative],
+          backgroundColor: "yellow",
+        }, ],
+      };
+
+      const ctx = document.getElementById("confusion-matrix").getContext("2d");
+      new Chart(ctx, {
+        type: "bar",
+        data: matrixData,
+        options: {
+          scales: {
+            x: { stacked: true },
+            y: { stacked: true },
+          },
+        },
+      });
+    }
+
+    document.getElementById("calculate-btn").addEventListener("click", calculateMetrics);
+
+    function calculateMetrics() {
+      const truePositive = parseInt(document.getElementById("true-positive").value);
+      const falsePositive = parseInt(document.getElementById("false-positive").value);
+      const trueNegative = parseInt(document.getElementById("true-negative").value);
+      const falseNegative = parseInt(document.getElementById("false-negative").value);
+
+      const accuracy = (truePositive + trueNegative) / (truePositive + falsePositive + trueNegative + falseNegative);
+      const precision = truePositive / (truePositive + falsePositive);
+      const recall = truePositive / (truePositive + falseNegative);
+      const fScore = (2 * precision * recall) / (precision + recall);
+
+      const resultElement = document.getElementById("result");
+      resultElement.innerHTML = `
+        <p>Accuracy: ${accuracy.toFixed(2)}</p>
+        <p>Precision: ${precision.toFixed(2)}</p>
+        <p>Recall: ${recall.toFixed(2)}</p>
+        <p>F-Score: ${fScore.toFixed(2)}</p>
+      `;
+
+      drawConfusionMatrix(truePositive, falsePositive, trueNegative, falseNegative);
+    }
+  </script>
+</body>
+</html>
