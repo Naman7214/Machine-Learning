@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Linear Regression</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1f1f1f;
+      background-image: linear-gradient(to bottom right, #333, #1f1f1f);
+    }
+
+    tbody {
+      text-align: center;
+    }
+
+    table tr {
+      width: 50%;
+    }
+
+    h1, h2 {
+      text-align: center;
+      color: white;
+      padding: 20px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    table th, table td {
+      padding: 10px;
+      border: 1px solid #333;
+    }
+
+    table th {
+      background-color: #333;
+      color: white;
+    }
+
+    table input {
+      width: 80%;
+      padding: 5px;
+    }
+
+    #add-row-btn, #submit-btn, #predict-y-btn, #predict-x-btn {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #add-row-btn:hover, #submit-btn:hover {
+      background-color: #45a049;
+    }
+
+    #add-row-btn:active, #submit-btn:active {
+      background-color: #3e8e41;
+    }
+
+    #results-container, #prediction-container {
+      margin-top: 20px;
+      text-align: center;
+      color: white;
+    }
+
+    #prediction-container label {
+      display: block;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+
+    #prediction-container input, #prediction-container button {
+      display: block;
+      margin: 0 auto;
+    }
+
+    /* Additional styles for scrolling container */
+    #scroll-container {
+      max-height: 80vh; /* Set the maximum height for scrolling */
+      overflow-y: auto; /* Enable vertical scrolling when content exceeds max height */
+      padding: 20px; /* Add padding to the container for a better visual appearance */
+    }
+
+    #scroll-container div {
+      margin-bottom: 20px; /* Add space between sections */
+    }
+  </style>
+</head>
+<body>
+  <div id="scroll-container"> <!-- Wraps all content in a scrollable container -->
+    <div>
+      <h1>Linear Regression</h1>
+      <form id="data-form">
+        <table id="data-table">
+          <thead>
+            <tr>
+              <th>X</th>
+              <th>Y</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="number" name="x[]" step="any"></td>
+              <td><input type="number" name="y[]" step="any"></td>
+            </tr>
+          </tbody>
+        </table>
+        <button id="add-row-btn" type="button">Add Row</button>
+        <button id="submit-btn" type="button">Submit</button>
+      </form>
+    </div>
+
+    <div id="results-container"></div>
+
+    <div id="prediction-container">
+      <h2>Predict Values</h2>
+      <label for="predict-x">Enter X:</label>
+      <input type="number" id="predict-x" step="any">
+      <button id="predict-x-btn" type="button">Predict Y</button>
+      <br>
+      <label for="predict-y">Enter Y:</label>
+      <input type="number" id="predict-y" step="any">
+      <button id="predict-y-btn" type="button">Predict X</button>
+      <div id="prediction-result"></div>
+    </div>
+
+    <div id="results-container">
+      <canvas id="graph"></canvas>
+    </div>
+    
+
+
+  </div> <!-- End of scrollable container -->
+  
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    document.getElementById("add-row-btn").addEventListener("click", addRow);
+    document.getElementById("submit-btn").addEventListener("click", performLinearRegression);
+    document.getElementById("predict-x-btn").addEventListener("click", predictY);
+    document.getElementById("predict-y-btn").addEventListener("click", predictX);
+
+    var slope, intercept;
+    var xValues = [];
+    var yValues = [];
+
+    function addRow() {
+      var table = document.getElementById("data-table");
+      var row = table.insertRow();
+      var cell1 = row.insertCell();
+      var cell2 = row.insertCell();
+      cell1.innerHTML = '<input type="number" name="x[]" step="any">';
+      cell2.innerHTML = '<input type="number" name="y[]" step="any">';
+    }
+
+   
+    
+  function plotGraph() {
+    var ctx = document.getElementById('graph').getContext('2d');
+
+    // Calculate regression line points
+    var regressionLine = xValues.map(x => ({ x: x, y: slope * x + intercept }));
+
+    var scatterData = {
+      label: 'Data Points',
+      data: xValues.map((x, i) => ({ x: x, y: yValues[i] })),
+      backgroundColor: 'blue',
+      borderColor: 'blue',
+      pointRadius: 5,
+      showLine: false
+    };
+
+    var lineData = {
+      label: 'Regression Line',
+      data: regressionLine,
+      borderColor: 'red',
+      borderWidth: 2,
+      fill: false
+    };
+
+    var chartData = {
+      datasets: [scatterData, lineData]
+    };
+
+    var chartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: {
+          type: 'linear',
+          position: 'bottom'
+        },
+        y: {
+          type: 'linear'
+        }
+      }
+    };
+
+    new Chart(ctx, {
+      type: 'scatter',
+      data: chartData,
+      options: chartOptions
+    });
+  }
+
+    function performLinearRegression() {
+      
+
+      var table = document.getElementById("data-table");
+      var rows = table.getElementsByTagName("tr");
+      for (var i = 1; i < rows.length; i++) {
+        var cells = rows[i].getElementsByTagName("td");
+        var x = parseFloat(cells[0].getElementsByTagName("input")[0].value);
+        var y = parseFloat(cells[1].getElementsByTagName("input")[0].value);
+        xValues.push(x);
+        yValues.push(y);
+      }
+
+      var n = xValues.length;
+      var sumX = xValues.reduce((a, b) => a + b, 0);
+      var sumY = yValues.reduce((a, b) => a + b, 0);
+      var sumXY = xValues.map((x, i) => x * yValues[i]).reduce((a, b) => a + b, 0);
+      var sumX2 = xValues.map(x => x * x).reduce((a, b) => a + b, 0);
+
+      slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      intercept = (sumY - slope * sumX) / n;
+
+      var resultsContainer = document.getElementById("results-container");
+      resultsContainer.innerHTML = "Regression Equation: y = " + slope.toFixed(2) + "x + " + intercept.toFixed(2);
+      plotGraph();
+    }
+
+    function predictY() {
+      var predictX = parseFloat(document.getElementById("predict-x").value);
+      var predictedY = slope * predictX + intercept;
+      var predictionResult = document.getElementById("prediction-result");
+      predictionResult.innerHTML = "Predicted Y for X=" + predictX + ": " + predictedY.toFixed(2);
+    }
+
+    function predictX() {
+      var predictY = parseFloat(document.getElementById("predict-y").value);
+      var predictedX = (predictY - intercept) / slope;
+      var predictionResult = document.getElementById("prediction-result");
+      predictionResult.innerHTML = "Predicted X for Y=" + predictY + ": " + predictedX.toFixed(2);
+    }
+  </script>
+</body>
+</html>
