@@ -8,7 +8,6 @@
       margin: 0;
       padding: 0;
       background-color: #1f1f1f;
-     
     }
 
     .home-container {
@@ -24,7 +23,8 @@
 
     .ml-tool-links {
       display: flex;
-      justify-content: center;
+      flex-direction: column; /* Display links vertically */
+      align-items: center; /* Center align the links */
     }
 
     .ml-tool-link {
@@ -48,6 +48,7 @@
     <h1 class="home-header">Naman's Project</h1>
     <div class="ml-tool-links">
       <a href="LinearRegressor.html" class="ml-tool-link">Linear Regressor</a>
+      <a href="ConfusionMatrix.html" class="ml-tool-link">Confusion Matrix</a>
       <!-- Add more tool links as needed -->
     </div>
   </div>
