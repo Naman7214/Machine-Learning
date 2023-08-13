@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Linear Regression</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #1f1f1f;
+      background-image: linear-gradient(to bottom right, #333);
+    }
+
+    #csv-file {
+    background-color: #4CAF50;
+    padding: 10px 20px;
+    display: block;
+    margin: 0 auto; /* Center horizontally */
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+    #load-btn, #predict-y-btn, #predict-x-btn {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    h1, h2 {
+      text-align: center;
+      color: white;
+      padding: 20px;
+    }
+
+    #scroll-container {
+      margin: 0 auto;
+      max-width: 800px;
+    }
+
+    #results-container, #prediction-container, #graph-container {
+      margin-top: 20px;
+      text-align: center;
+      color: white;
+    }
+
+    #graph {
+      max-width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div id="scroll-container">
+    <div>
+      <h1>Linear Regression</h1>
+      <input type="file" id="csv-file" accept=".csv">
+      <button id="load-btn" type="button">Load CSV</button>
+    </div>
+
+    <div id="results-container"></div>
+
+    <div id="prediction-container">
+      <h2>Predict Values</h2>
+      <label for="predict-x">Enter X:</label>
+      <input type="number" id="predict-x" step="any">
+      <button id="predict-x-btn" type="button">Predict Y</button>
+      <br>
+      <label for="predict-y">Enter Y:</label>
+      <input type="number" id="predict-y" step="any">
+      <button id="predict-y-btn" type="button">Predict X</button>
+      <div id="prediction-result"></div>
+    </div>
+
+    <div id="graph-container">
+      <canvas id="graph"></canvas>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.3.0"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <script>
+    document.getElementById("load-btn").addEventListener("click", loadCSV);
+
+    var slope, intercept;
+    var xValues = [];
+    var yValues = [];
+
+    function loadCSV() {
+      var fileInput = document.getElementById("csv-file");
+      var file = fileInput.files[0];
+      var reader = new FileReader();
+      reader.onload = function (e) {
+        var contents = e.target.result;
+        parseCSV(contents);
+      };
+      reader.readAsText(file);
+    }
+
+    function parseCSV(csv) {
+      Papa.parse(csv, {
+        header: true,
+        dynamicTyping: true,
+        complete: function (results) {
+          var data = results.data;
+          xValues = data.map(row => row.X);
+          yValues = data.map(row => row.Y);
+          performLinearRegression();
+        }
+      });
+    }
+
+    function performLinearRegression() {
+      var sumX = 0;
+      var sumY = 0;
+      var sumXY = 0;
+      var sumX2 = 0;
+
+      for (var i = 0; i < xValues.length; i++) {
+        sumX += xValues[i];
+        sumY += yValues[i];
+        sumXY += xValues[i] * yValues[i];
+        sumX2 += xValues[i] * xValues[i];
+      }
+
+      var n = xValues.length;
+      slope = (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX);
+      intercept = (sumY - slope * sumX) / n;
+
+      var predictionResult = document.getElementById("prediction-result");
+      predictionResult.innerHTML = "Equation: Y = " + slope.toFixed(2) + "X + " + intercept.toFixed(2);
+
+      renderGraph();
+    }
+
+    function predictY() {
+      var predictX = parseFloat(document.getElementById("predict-x").value);
+      var predictedY = slope * predictX + intercept;
+      var predictionResult = document.getElementById("prediction-result");
+      predictionResult.innerHTML = "Predicted Y for X=" + predictX + ": " + predictedY.toFixed(2);
+    }
+
+    function predictX() {
+      var predictY = parseFloat(document.getElementById("predict-y").value);
+      var predictedX = (predictY - intercept) / slope;
+      var predictionResult = document.getElementById("prediction-result");
+      predictionResult.innerHTML = "Predicted X for Y=" + predictY + ": " + predictedX.toFixed(2);
+    }
+
+    function renderGraph() {
+      var ctx = document.getElementById("graph").getContext("2d");
+      var data = [];
+      for (var i = 0; i < xValues.length; i++) {
+        data.push({ x: xValues[i], y: yValues[i] });
+      }
+
+      var regressionLine = [];
+      var minX = Math.min(...xValues);
+      var maxX = Math.max(...xValues);
+      regressionLine.push({ x: minX, y: slope * minX + intercept });
+      regressionLine.push({ x: maxX, y: slope * maxX + intercept });
+
+      new Chart(ctx, {
+        type: "scatter",
+        data: {
+          datasets: [
+            {
+              label: "Data Points",
+              data: data,
+              backgroundColor: "rgba(75, 192, 192, 0.6)"
+            },
+            {
+              label: "Regression Line",
+              data: regressionLine,
+              type: "line",
+              borderColor: "#FF5733",
+              borderWidth: 2
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: {
+            x: {
+              type: "linear",
+              position: "bottom"
+            },
+            y: {
+              type: "linear",
+              position: "left"
+            }
+          }
+        }
+      });
+    }
+
+    document.getElementById("predict-x-btn").addEventListener("click", predictY);
+    document.getElementById("predict-y-btn").addEventListener("click", predictX);
+  </script>
+</body>
+</html>
